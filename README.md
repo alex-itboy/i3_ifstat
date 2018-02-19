@@ -8,7 +8,7 @@ programs to constantly call it and show it to the status bar. For me I use i3pys
 which is 
 `i3_ifstat -i <interface>`
 
-To check out interfaces, use
+To check out interfaces, use `ip address` to list them
 
 On my i3pystatus setup
 ```python
