@@ -35,6 +35,13 @@ else:
 
 and you can just `./configure`, `make` then put the `ifstat` execute file to `/home/yours/.config/i3/i3_ifstat`
 
+### How it looks
+Its output is like this:
+`$ ~/.config/i3/i3_ifstat -i wlp4s0`
+`↓0 ↑0(kB/s)`
+`$ ~/.config/i3/i3_ifstat -i not_a_interface`
+`↓-1 ↑-1(kB/s)`
+
 ### Something else
 Actually， all I do is slightly change the way it output its data. Default delay is 990ms.(because I run it every second)
 
