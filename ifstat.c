@@ -128,6 +128,8 @@ static int win_gettimeofday(struct timeval *tv, void *tz) {
 #define gettimeofday win_gettimeofday
 #endif
 
+int output_fix_width = -1;
+
 /* parse interface list, using \ as escape character */
 static int parse_interfaces(char *string, struct ifstat_list *ifs) {
   char *s, *d, *buf;
@@ -162,7 +164,7 @@ static int parse_interfaces(char *string, struct ifstat_list *ifs) {
   *d = '\0';
   if (*buf != '\0')
     ifstat_add_interface(ifs, buf, 0);
-    return 1;
+  return 1;
 
   free(buf);
   return 1;
@@ -324,6 +326,7 @@ static void print_stats(struct ifstat_list *ifs, struct timeval *start,
   char stats[WIDTH + 1];
   double delay, kbin, kbout, tkbin, tkbout, scale;
   struct tm *ltm;
+  char output_buf[1024] = {0};
 
   // if (options & OPT_NOSCROLL)
   //   putc('\r', stdout);
@@ -369,7 +372,8 @@ static void print_stats(struct ifstat_list *ifs, struct timeval *start,
     //   strcpy(stats, NA);
     // strcpy(stats + sizeof(NUM) - 1, SPACE);
     // if (kbout >= 0)
-    //   snprintf(stats + sizeof(NUM) + sizeof(SPACE) - 2, sizeof(NUM), FMT(kbout),
+    //   snprintf(stats + sizeof(NUM) + sizeof(SPACE) - 2, sizeof(NUM),
+    //   FMT(kbout),
     //            kbout);
     // else
     //   strcpy(stats + sizeof(NUM) + sizeof(SPACE) - 2, NA);
@@ -382,7 +386,26 @@ static void print_stats(struct ifstat_list *ifs, struct timeval *start,
     // len = LEN(options, ptr->namelen);
     // print_center(stats, WIDTH, len);
     // pos = pos_next(pos, len, options);
-    printf("↓%d ↑%d(kB/s)", (int)kbin, (int)kbout);
+    sprintf(output_buf, "↓%d ↑%d(kB/s)", (int)kbin, (int)kbout);
+
+    if (output_fix_width > 0) {
+      int len = strlen(output_buf);
+      if (len < output_fix_width) {
+        char *p = output_buf + len;
+        while (len < output_fix_width) {
+          *p = '_';
+          ++len;
+          ++p;
+        }
+        *p = '\0';
+      } else {
+        output_buf[output_fix_width + 1] = '\0';
+      }
+    }
+
+    printf("%s", output_buf);
+
+    // add
   }
   termsize.datalines = line + 1;
   // if (!(options & OPT_NOSCROLL))
@@ -554,6 +577,16 @@ int main(int argc, char **argv) {
         break;
       case 'h':
         usage(EXIT_SUCCESS);
+      case 'L':
+        // Alex modification for output fix_width
+        needarg(*opt, arg, argc);
+        output_fix_width = atoi(argv[++arg]);
+        if (output_fix_width <= 0) {
+          fprintf(stderr, "%s: error parsing output width.\n", argv[arg]);
+          exit(EXIT_FAILURE);
+        }
+        output_fix_width = output_fix_width > 512 ? 512 : output_fix_width;
+        break;
       default:
         fprintf(stderr, "%s: invalid option '-%c'.\n", ifstat_progname, *opt);
         usage(EXIT_FAILURE);
